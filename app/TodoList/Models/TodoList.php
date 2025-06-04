@@ -9,9 +9,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @method static findOrFail(string $id)
+ */
 class TodoList extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    protected $dates = ['deleted_at'];
 
     protected $table = 'tasks';
     protected $fillable = [
@@ -25,7 +30,7 @@ class TodoList extends Model
         'status' => Status::Completed->value,
     ];
 
-    protected static function newFactory()
+    protected static function newFactory(): TodoFactory|Factory
     {
         return TodoFactory::new();
     }

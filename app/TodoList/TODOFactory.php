@@ -17,4 +17,16 @@ class TODOFactory
         $todo->save();
         return $todo;
     }
+
+    public static function update(TodoListDTO $DTO, TodoList $todo): TodoList
+    {
+        $todo->fill([
+            'title' => $DTO->title,
+            'description' => $DTO->description,
+            'status' => $DTO->status,
+        ]);
+
+        $todo->save();
+        return $todo;
+    }
 }
