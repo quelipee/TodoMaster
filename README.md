@@ -22,8 +22,8 @@ Autenticação feita com Laravel Breeze para simplicidade e recursos modernos.
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/seuusuario/seurepositorio.git
-cd seurepositorio
+git clone https://github.com/quelipee/TodoMaster.git
+cd TodoMaster
 ```
 
 2. Instale as dependências PHP:
