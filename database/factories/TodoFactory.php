@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use App\TodoList\Models\TodoList;
 use App\TodoList\Status;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -25,6 +26,7 @@ class TodoFactory extends Factory
             'title' => $this->faker->word(),
             'description' => $this->faker->text(),
             'status' => Arr::random([Status::Completed->value, Status::Pending->value]),
+            'userId' => 1
         ];
     }
 }

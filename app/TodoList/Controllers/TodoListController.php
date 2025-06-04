@@ -6,14 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\TodoList\Models\TodoList;
 use App\TodoList\Requests\TodoListRequest;
+use App\TodoList\Status;
 use App\TodoList\TodoListContracts;
 use App\TodoList\TodoListDTO;
-use Illuminate\Contracts\View\Factory;
-use Illuminate\Contracts\View\View;
-use Illuminate\Foundation\Application;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Pagination\AbstractPaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class TodoListController extends Controller
@@ -27,38 +31,34 @@ class TodoListController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): Response
+    public function index(Request $request): View|RedirectResponse
     {
         $status = $request->get("status");
 
-        $tasks = TodoList::query()->where('status', $status)
-            ->paginate(10)
-            ->withQueryString();
+        if (!in_array($status, [Status::Pending->value, Status::Completed->value])) {
+            return redirect()->route('dashboard');
+        }
 
-        return response()
-            ->view('todolist.index',
-                compact('tasks', 'status'),
-                ResponseAlias::HTTP_OK);
+        $todolist = $this->getStatusTodo($status);
+
+        return view('dashboard', compact('todolist'));
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): Response
     {
-        //
+        return response()->view('formTodo');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(TodoListRequest $request): JsonResponse
+    public function store(TodoListRequest $request): RedirectResponse
     {
         $todo = $this->contracts->newTodo(TodoListDTO::FromValidatedRequest($request));
-        return response()->json([
-            'todo' => $todo,
-            'message' => 'Todo created success!!'
-        ], ResponseAlias::HTTP_CREATED);
+        return redirect()->route('todolist.index', ['status' => $todo->status]);
     }
 
     /**
@@ -66,41 +66,35 @@ class TodoListController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $todo = TodoList::findOrFail($id);
+        return \response()->view('show',compact('todo'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(string $id): Response
     {
-        //
+        $todo = TodoList::findOrFail($id);
+        return response()->view('formTodo', compact('todo'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(TodoListRequest $request, string $id): JsonResponse
+    public function update(TodoListRequest $request, string $id): RedirectResponse
     {
-        $todo = $this->contracts->updatedTodo(TodoListDTO::FromValidatedRequest($request),$id);
-        return response()->json([
-            'message' => 'Todo updated success',
-            'data' => $todo
-        ], ResponseAlias::HTTP_FOUND);
+        $todo = $this->contracts->updatedTodo(TodoListDTO::FromValidatedRequest($request), $id);
+        return redirect()->route('todolist.index', ['status' => $todo->status]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): RedirectResponse
     {
-        $todo = TodoList::findOrFail($id);
-        $todo->delete();
-
-        return response()->json([
-            'data' => $todo,
-            'message' => 'Todo deleted with success!!'
-        ], ResponseAlias::HTTP_NO_CONTENT);
+        $this->contracts->deleteTodo($id);
+        return redirect()->route('todolist.index');
     }
 
     public function restoreSoftDelete(string $id): JsonResponse
@@ -111,5 +105,17 @@ class TodoListController extends Controller
             'data' => $todo,
             'message' => "Restore Todo with success!!"
         ], ResponseAlias::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * @param mixed $status
+     * @return AbstractPaginator|LengthAwarePaginator
+     */
+    public function getStatusTodo(mixed $status): AbstractPaginator|LengthAwarePaginator
+    {
+        return TodoList::query()->where('status', $status)
+            ->where('userId', Auth::id())
+            ->paginate(10)
+            ->withQueryString();
     }
 }

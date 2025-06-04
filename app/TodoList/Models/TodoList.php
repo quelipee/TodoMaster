@@ -2,11 +2,13 @@
 
 namespace App\TodoList\Models;
 
+use App\Models\User;
 use App\TodoList\Status;
 use Database\Factories\TodoFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -35,4 +37,8 @@ class TodoList extends Model
         return TodoFactory::new();
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'userId');
+    }
 }

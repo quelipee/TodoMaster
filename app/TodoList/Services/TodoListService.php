@@ -19,4 +19,17 @@ class TodoListService implements TodoListContracts
         $todo = TodoList::findOrFail($id);
         return TODOFactory::update($DTO,$todo);
     }
+
+    /**
+     * @throws \Exception
+     */
+    public function deleteTodo(string $id): void
+    {
+        $todo = TodoList::findOrFail($id);
+        $todo->delete();
+
+        if (!$todo->trashed()){
+            throw new \Exception('Todo was not soft deleted!');
+        }
+    }
 }
